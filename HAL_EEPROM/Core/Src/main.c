@@ -44,7 +44,7 @@ I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
 DS3231_Time_t timer_time = {0,0,0,0,0,0,0};
-
+uint8_t received_data [10];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -52,7 +52,9 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-
+void device_send(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size);
+void device_receive(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t MemAddress,\
+		uint8_t *pData, uint16_t Size);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -90,9 +92,9 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-//  uint8_t ROM_ADDR = 0b10100000;
-//  uint8_t PAGE_0 = 0b10;
-//  uint8_t write_data;
+  uint8_t ROM_ADDR = 0x50;
+  uint8_t PAGE_0 = 0b0;
+  //uint8_t write_data;
 
   /* USER CODE END 2 */
 
@@ -100,16 +102,16 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  timer_time = DS3231_get_time(&hi2c1);
-	  HAL_Delay(1000);
-
-	  //	  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-////	  write_data = 0xF;
-////	  HAL_I2C_Mem_Write(&hi2c1, (ROM_ADDR | PAGE_0), 0, I2C_MEMADD_SIZE_8BIT, &write_data, 1,100);
+//	  timer_time = DS3231_get_time(&hi2c1);
 //	  HAL_Delay(1000);
-//	  HAL_I2C_Mem_Read(&hi2c1, (ROM_ADDR | PAGE_0), 0, I2C_MEMADD_SIZE_8BIT, received_data, 1, 100);
 
-	  /* USER CODE END WHILE */
+	  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+//	  write_data = 0xF;
+//	  HAL_I2C_Mem_Write(&hi2c1, (ROM_ADDR | PAGE_0), 0, I2C_MEMADD_SIZE_8BIT, &write_data, 1,100);
+	  HAL_Delay(1000);
+	  //HAL_I2C_Mem_Read(&hi2c1, ((ROM_ADDR | PAGE_0) << 1), 0, I2C_MEMADD_SIZE_8BIT, received_data, 1, 100);
+	  device_receive(&hi2c1, ((ROM_ADDR)<<1), 0, received_data, 1);
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -217,6 +219,20 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void device_send(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size)
+{
+	HAL_I2C_Master_Transmit(hi2c, DevAddress, pData, Size, 100);
+	while(HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY){};
+}
+
+void device_receive(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t MemAddress, uint8_t *pData, uint16_t Size)
+{
+	uint8_t mem = MemAddress;
+	HAL_I2C_Master_Transmit(hi2c, DevAddress, &mem, 1, 100);
+	while(HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY){};
+	HAL_I2C_Master_Receive(hi2c, DevAddress, pData, Size, 100);
+	while(HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY){};
+}
 
 /* USER CODE END 4 */
 
