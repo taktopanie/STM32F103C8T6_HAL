@@ -31,7 +31,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ROM_ADDR  	0xA0
 
+#define PAGE_0		0
+#define PAGE_1		(1 << 1)
+
+#define PAGE_SIZE	16
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -41,20 +46,29 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
+I2C_HandleTypeDef hi2c2;
 
 /* USER CODE BEGIN PV */
 DS3231_Time_t timer_time = {0,0,0,0,0,0,0};
-uint8_t received_data [10];
+uint8_t received_data [256];
+uint8_t ROM_DUMP [512];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_I2C2_Init(void);
 /* USER CODE BEGIN PFP */
 void device_send(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size);
 void device_receive(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t MemAddress,\
 		uint8_t *pData, uint16_t Size);
+
+void EEPROM_write(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t MemAddress,\
+		uint8_t *pData, uint16_t Size);
+void EEPROM_read(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t MemAddress,\
+		uint8_t *pData, uint16_t Size);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -91,26 +105,49 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
+  MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t ROM_ADDR = 0x50;
-  uint8_t PAGE_0 = 0b0;
-  //uint8_t write_data;
 
+  uint8_t write_data [16];
+
+
+  //CHANGE FIRST PAGE IN THE FIRST HALF
+  for(int i = 0; i<16; i++)
+  {
+	  write_data[i] = i;
+  }
+
+  EEPROM_write(&hi2c1, (ROM_ADDR | PAGE_0), 0x00, write_data, PAGE_SIZE);
+
+
+  //CHANGE FIRST PAGE IN THE SECOND HALF
+  for(int i = 0; i<16; i++)
+  {
+	  write_data[i] = 0xBD;
+  }
+
+  EEPROM_write(&hi2c1, (ROM_ADDR | PAGE_1), 0x00, write_data, PAGE_SIZE);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	  timer_time = DS3231_get_time(&hi2c1);
-//	  HAL_Delay(1000);
+
+	  //DUMP ALL THE MEMORY 512*8 = 4096
+	  EEPROM_read(&hi2c1, (ROM_ADDR | PAGE_0), 0x00, ROM_DUMP, (512));
+
+	  //READ THE FIRST PAGE / FIRST HALF MEMORY 256*8 = 2048 bits
+	  EEPROM_read(&hi2c1, (ROM_ADDR | PAGE_0), 0x00, received_data, (256));
+
+	  //READ THE SECOND PAGE / SECOND HALF MEMORY 256*8 = 2048 bits
+	  EEPROM_read(&hi2c1, (ROM_ADDR | PAGE_1), 0x00, received_data, (256));
 
 	  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-//	  write_data = 0xF;
-//	  HAL_I2C_Mem_Write(&hi2c1, (ROM_ADDR | PAGE_0), 0, I2C_MEMADD_SIZE_8BIT, &write_data, 1,100);
+
+	  // CUSTOM DELAY - JUST FOR TESTING PURPOSE
 	  HAL_Delay(1000);
-	  //HAL_I2C_Mem_Read(&hi2c1, ((ROM_ADDR | PAGE_0) << 1), 0, I2C_MEMADD_SIZE_8BIT, received_data, 1, 100);
-	  device_receive(&hi2c1, ((ROM_ADDR)<<1), 0, received_data, 1);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -189,6 +226,40 @@ static void MX_I2C1_Init(void)
 }
 
 /**
+  * @brief I2C2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C2_Init(void)
+{
+
+  /* USER CODE BEGIN I2C2_Init 0 */
+
+  /* USER CODE END I2C2_Init 0 */
+
+  /* USER CODE BEGIN I2C2_Init 1 */
+
+  /* USER CODE END I2C2_Init 1 */
+  hi2c2.Instance = I2C2;
+  hi2c2.Init.ClockSpeed = 100000;
+  hi2c2.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c2.Init.OwnAddress1 = 0;
+  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c2.Init.OwnAddress2 = 0;
+  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C2_Init 2 */
+
+  /* USER CODE END I2C2_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -219,6 +290,29 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void EEPROM_write(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t MemAddress, uint8_t *pData, uint16_t Size)
+{
+	//set memory address
+	uint8_t tmp_data[Size+1];
+	tmp_data[0] = MemAddress;
+
+	//set the data to send
+	for(int i = 0; i < Size; i++)
+	{
+		tmp_data[i+1] = pData[i];
+	}
+
+	device_send(hi2c, DevAddress, tmp_data, (Size+1));
+
+	//DELAY TWR = 5MS - see documentation
+	HAL_Delay(5);
+}
+
+void EEPROM_read(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t MemAddress, uint8_t *pData, uint16_t Size)
+{
+	HAL_I2C_Mem_Read(&hi2c1, DevAddress, MemAddress, 1, pData, Size, HAL_MAX_DELAY);
+}
+
 void device_send(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size)
 {
 	HAL_I2C_Master_Transmit(hi2c, DevAddress, pData, Size, 100);
@@ -230,6 +324,7 @@ void device_receive(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t MemAdd
 	uint8_t mem = MemAddress;
 	HAL_I2C_Master_Transmit(hi2c, DevAddress, &mem, 1, 100);
 	while(HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY){};
+	HAL_Delay(5);
 	HAL_I2C_Master_Receive(hi2c, DevAddress, pData, Size, 100);
 	while(HAL_I2C_GetState(hi2c) != HAL_I2C_STATE_READY){};
 }
