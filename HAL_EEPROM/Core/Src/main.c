@@ -111,14 +111,23 @@ int main(void)
   uint8_t write_data [16];
 
 
-  //CHANGE FIRST PAGE IN THE FIRST HALF
-  for(int i = 0; i<16; i++)
+  //FILL ALL THE ROM MEMORY WITH THE GIVEN DATA
+  for(int j = 0; j < 32; j++)
   {
-	  write_data[i] = i;
+	  for(int i = 0; i<16; i++)
+	  {
+		  write_data[i] = j;
+	  }
+
+	  if(j < 16)
+	  {
+		  EEPROM_write(&hi2c1, (ROM_ADDR | PAGE_0), 16*j, write_data, PAGE_SIZE);
+	  }
+	  else
+	  {
+		  EEPROM_write(&hi2c1, (ROM_ADDR | PAGE_1),  16*(j-16), write_data, PAGE_SIZE);
+	  }
   }
-
-  EEPROM_write(&hi2c1, (ROM_ADDR | PAGE_0), 0x00, write_data, PAGE_SIZE);
-
 
   //CHANGE FIRST PAGE IN THE SECOND HALF
   for(int i = 0; i<16; i++)
