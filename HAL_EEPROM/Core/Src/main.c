@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "DS3231.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,6 +53,10 @@ I2C_HandleTypeDef hi2c2;
 DS3231_Time_t timer_time = {0,0,0,0,0,0,0};
 uint8_t received_data [256];
 uint8_t ROM_DUMP [512];
+
+//56 bits = 7bytes
+DS3231_Time_t TIME_BUFF;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -111,6 +116,33 @@ int main(void)
   uint8_t write_data [16];
 
 
+  //CHECK IF THE MEMORY IS AVAILABLE
+  if(HAL_I2C_IsDeviceReady(&hi2c1, (ROM_ADDR | PAGE_0), 5, 50) == HAL_OK);
+  else
+  {
+	  while(1)
+	  {
+		  //MEMORY IS NOT WORKING
+	  }
+  }
+  //CHECK IF THE CLOCK IS WORKING
+  if(HAL_I2C_IsDeviceReady(&hi2c1, DS3231_address, 5, 50) == HAL_OK);
+  else
+  {
+	  while(1)
+	  {
+		  //CLOCK IS NOT WORKING
+	  }
+  }
+
+
+  EEPROM_read(&hi2c1, (ROM_ADDR | PAGE_0), 0x00, (uint8_t*)&TIME_BUFF, 7);
+  printf("\n\rProgram is running...\r\n"\
+		  "Last time program run: %.2d:%.2d:%.2d\r\n"\
+		  , TIME_BUFF.time_hr, TIME_BUFF.time_min, TIME_BUFF.time_sec);
+
+  TIME_BUFF = DS3231_get_time(&hi2c1);
+
   //FILL ALL THE ROM MEMORY WITH THE GIVEN DATA
   for(int j = 0; j < 32; j++)
   {
@@ -135,14 +167,14 @@ int main(void)
 	  write_data[i] = 0xBD;
   }
 
-  EEPROM_write(&hi2c1, (ROM_ADDR | PAGE_1), 0x00, write_data, PAGE_SIZE);
+  EEPROM_write(&hi2c1, (ROM_ADDR | PAGE_0), 0x00, (uint8_t*)&TIME_BUFF, 7);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
+	  TIME_BUFF = DS3231_get_time(&hi2c1);
 	  //DUMP ALL THE MEMORY 512*8 = 4096
 	  EEPROM_read(&hi2c1, (ROM_ADDR | PAGE_0), 0x00, ROM_DUMP, (512));
 

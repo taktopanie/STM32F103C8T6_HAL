@@ -34,7 +34,7 @@
    */
 
 
-#define DS3231_address 								0b11010001
+#define DS3231_address 								0b11010000
 
 /*
  * @ALARM_NUMBERS
