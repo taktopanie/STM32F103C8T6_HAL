@@ -57,7 +57,19 @@ static void MX_SPI2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+//void my_fill(void)
+//{
+//	lcd_set_window(x, y, width, height);
+//	lcd_cmd(ST7735S_RAMWR);
+//	for (int i = 0; i < width * height; i++)
+//
+//	uint16_t color = RED;
+//	HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_SET);
+//	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET);
+//	HAL_SPI_Transmit(&hspi2, &data, 1, HAL_MAX_DELAY);
+//	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET);
+//
+//}
 /* USER CODE END 0 */
 
 /**
@@ -93,14 +105,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   lcd_init();
-  lcd_fill_box(0, 0, 160, 16, RED);
-  lcd_fill_box(0, 16, 160, 16, GREEN);
-  lcd_fill_box(0, 32, 160, 16, BLUE);
-  lcd_fill_box(0, 48, 160, 16, YELLOW);
-  lcd_fill_box(0, 64, 160, 16, MAGENTA);
-  lcd_fill_box(0, 80, 160, 16, CYAN);
-  lcd_fill_box(0, 96, 160, 16, WHITE);
-  lcd_fill_box(0, 112, 160, 16, BLACK);
+
+
+
+  //lcd_send(0x139);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -109,7 +117,19 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+	  lcd_fill_box(0, 0, 64, 160, RED);
+	  HAL_Delay(5000);
+	  lcd_fill_box(64, 0, 128, 160, GREEN);
+	  HAL_Delay(5000);
+	  lcd_fill_box(0, 0, 64, 160, BLUE);
+	  HAL_Delay(5000);
+	  lcd_fill_box(64, 0, 128, 160, BLACK);
+	  HAL_Delay(5000);
+
+//	  HAL_Delay(1000);
+//	  lcd_send(0x138);
+
+	  /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
@@ -201,6 +221,7 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LCD_DC_Pin|LCD_CS_Pin, GPIO_PIN_RESET);

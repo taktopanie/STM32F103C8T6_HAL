@@ -57,7 +57,7 @@
 extern SPI_HandleTypeDef hspi2;
 
 static const uint16_t init_table[] = {
-  CMD(ST7735S_FRMCTR1), 0x01, 0x2c, 0x2d,
+  CMD(ST7735S_FRMCTR1), 0x05, 0x2c, 0x2d,
   CMD(ST7735S_FRMCTR2), 0x01, 0x2c, 0x2d,
   CMD(ST7735S_FRMCTR3), 0x01, 0x2c, 0x2d, 0x01, 0x2c, 0x2d,
   CMD(ST7735S_INVCTR), 0x07,
@@ -94,7 +94,7 @@ static void lcd_data(uint8_t data)
 	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET);
 }
 
-static void lcd_send(uint16_t value)
+void lcd_send(uint16_t value)
 {
 	if (value & 0x100) {
 		lcd_cmd(value);
@@ -151,6 +151,7 @@ static void lcd_set_window(int x, int y, int width, int height)
 void lcd_fill_box(int x, int y, int width, int height, uint16_t color)
 {
 	lcd_set_window(x, y, width, height);
+	int id = 0;
 
 	lcd_cmd(ST7735S_RAMWR);
 	for (int i = 0; i < width * height; i++)
