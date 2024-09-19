@@ -23,7 +23,7 @@
 
 void lcd_fill_box(int x, int y, int width, int height, uint16_t color);
 
-void lcd_init(void);
+void lcd_st7735_init(void);
 
 void lcd_send(uint16_t value);
 

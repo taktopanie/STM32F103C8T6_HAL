@@ -103,7 +103,7 @@ void lcd_send(uint16_t value)
 	}
 }
 
-void lcd_init(void)
+void lcd_st7735_init(void)
 {
   int i;
 
