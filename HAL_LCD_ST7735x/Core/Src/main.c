@@ -25,6 +25,7 @@
 #include "LCD_MCUDEV.h"
 #include "fonts.h"
 #include "ST7735.h"
+#include "stdio.h"
 
 /* USER CODE END Includes */
 
@@ -197,37 +198,9 @@ ST7735_BLACK);
 HAL_Delay(2000);
 
  // Check colors
-ST7735_FillScreen(ST7735_BLACK);
-ST7735_DrawString(0, 0, "BLACK", Font_11x18, ST7735_WHITE, ST7735_BLACK);
-HAL_Delay(500);
-
-ST7735_FillScreen(ST7735_BLUE);
-ST7735_DrawString(0, 0, "BLUE", Font_11x18, ST7735_BLACK, ST7735_BLUE);
-HAL_Delay(500);
-
-ST7735_FillScreen(ST7735_RED);
-ST7735_DrawString(0, 0, "RED", Font_11x18, ST7735_BLACK, ST7735_RED);
-HAL_Delay(500);
-
-ST7735_FillScreen(ST7735_GREEN);
-ST7735_DrawString(0, 0, "GREEN", Font_11x18, ST7735_BLACK, ST7735_GREEN);
-HAL_Delay(500);
-
-ST7735_FillScreen(ST7735_CYAN);
-ST7735_DrawString(0, 0, "CYAN", Font_11x18, ST7735_BLACK, ST7735_CYAN);
-HAL_Delay(500);
-
-ST7735_FillScreen(ST7735_MAGENTA);
-ST7735_DrawString(0, 0, "MAGENTA",Font_11x18, ST7735_BLACK, ST7735_MAGENTA);
-HAL_Delay(500);
-
-ST7735_FillScreen(ST7735_YELLOW);
-ST7735_DrawString(0, 0, "YELLOW", Font_11x18, ST7735_BLACK, ST7735_YELLOW);
-HAL_Delay(500);
-
 ST7735_FillScreen(ST7735_WHITE);
-ST7735_DrawString(0, 0, "WHITE", Font_11x18, ST7735_BLACK, ST7735_WHITE);
-HAL_Delay(500);
+ST7735_DrawString(0, 0, "TAKTOPANIE JUZ JEST OMG TAK TO JUZ JEST MOWIE CI XD", Font_11x18, ST7735_BLACK, ST7735_WHITE);
+HAL_Delay(5000);
 
 // Draw circles
 ST7735_FillScreen(ST7735_BLACK);
@@ -280,7 +253,15 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-  lcd_init();
+  lcd_st7735_init();
+  int liczba_1 = 0;
+  int liczba_2 = 0;
+
+  int sign_1 = 0;
+  int sign_2 = 0;
+
+  ST7735_FillScreen(ST7735_WHITE);
+  ST7735_DrawString(0, 0, "Pomiary", Font_16x26, ST7735_BLACK, ST7735_YELLOW);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -288,9 +269,62 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  FontDef _used_font = Font_11x18;
+	  uint16_t bg = ST7735_CYAN;
     /* USER CODE BEGIN 3 */
-	  demoTFT();
+
+
+	  char string[20];
+	  if(liczba_1 >= 1011) sign_1 =1;
+	  if(liczba_1 <= 0) sign_1 =0;
+	  if(sign_1)
+	  {
+		  sprintf(string, "%s %d", "P_1:" ,liczba_1--);
+	  }
+	  else
+	  {
+		  sprintf(string, "%s %d", "P_1:" ,liczba_1++);
+	  }
+
+	  ST7735_DrawString(10, 50, string, _used_font, ST7735_BLACK, bg);
+
+	  //CLEAR THE REST OF THE FIELD
+	  if(liczba_1 < 9)
+	  {
+		  ST7735_FillRectangle(10+(6 * (_used_font.width)), 50,((_used_font.width) * 3),(_used_font.height),bg);
+	  }else if(liczba_1 < 99)
+	  {
+		  ST7735_FillRectangle(10+(7 * (_used_font.width)), 50,((_used_font.width) * 2),(_used_font.height),bg);
+	  }else if(liczba_1 < 999)
+	  {
+		  ST7735_FillRectangle(10+(8 * (_used_font.width)), 50,(_used_font.width),(_used_font.height),bg);
+	  }
+
+	  if(liczba_2 >= 1011) sign_2 =1;
+	  if(liczba_2 <= 0) sign_2 =0;
+	  if(sign_2)
+	  {
+		  sprintf(string, "%s %d", "P_1:" ,liczba_2--);
+	  }
+	  else
+	  {
+		  sprintf(string, "%s %d", "P_1:" ,liczba_2++);
+	  }
+
+	  ST7735_DrawString(10, 50+_used_font.height, string, _used_font, ST7735_BLACK, bg);
+
+	  //CLEAR THE REST OF THE FIELD
+	  if(liczba_2 < 9)
+	  {
+		  ST7735_FillRectangle(10+(6 * (_used_font.width)), 50+_used_font.height,((_used_font.width) * 3),(_used_font.height),bg);
+	  }else if(liczba_2 < 99)
+	  {
+		  ST7735_FillRectangle(10+(7 * (_used_font.width)), 50+_used_font.height,((_used_font.width) * 2),(_used_font.height),bg);
+	  }else if(liczba_2 < 999)
+	  {
+		  ST7735_FillRectangle(10+(8 * (_used_font.width)), 50+_used_font.height,(_used_font.width),(_used_font.height),bg);
+	  }
+
   }
   /* USER CODE END 3 */
 }
@@ -382,6 +416,7 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LCD_DC_Pin|LCD_CS_Pin, GPIO_PIN_RESET);
