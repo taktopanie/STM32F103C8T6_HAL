@@ -94,9 +94,21 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_Delay(1);
-	  MOTOR_right_ULN2003();
-    /* USER CODE END WHILE */
+	  int delay = 1;
+	  for(int i = 0 ; i < 265; i++)
+	  {
+		  HAL_Delay(delay);
+		  MOTOR_right_CD();
+	  }
+
+	  delay = 1;
+	  for(int i = 0 ; i < 265; i++)
+	  {
+		  HAL_Delay(delay);
+		  MOTOR_left_CD();
+	  }
+	  delay = 1;
+	  /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
